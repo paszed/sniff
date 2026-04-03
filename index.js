@@ -23,9 +23,15 @@ async function readStdin() {
   });
 }
 
+// CLI args
+const args = process.argv.slice(2);
+const showAll = args.includes("--all");
+
+// read input
 const input = await readStdin();
 const items = Array.isArray(input) ? input : [input];
 
+// load state
 const store = loadStore();
 const results = [];
 
@@ -45,8 +51,11 @@ for (const item of items) {
   });
 }
 
+// save state
 saveStore(store);
 
-const onlyChanges = results.filter(r => r.changed);
-console.log(JSON.stringify(onlyChanges, null, 2));
+// output control
+const output = showAll ? results : results.filter(r => r.changed);
+
+console.log(JSON.stringify(output, null, 2));
 
