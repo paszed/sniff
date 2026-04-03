@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 
 import { parsePrice } from "./parser.js";
+import { loadStore, saveStore } from "./store.js";
+import { compare } from "./comparator.js";
 
 async function readStdin() {
   return new Promise((resolve) => {
@@ -22,16 +24,28 @@ async function readStdin() {
 }
 
 const input = await readStdin();
-
-// normalize to array
 const items = Array.isArray(input) ? input : [input];
 
-// parse prices
-const result = items.map(item => ({
-  ...item,
-  price: parsePrice(item.price)
-}));
+const store = loadStore();
+const results = [];
 
-// output
-console.log(JSON.stringify(result, null, 2));
+for (const item of items) {
+  const id = item.link || item.title;
+
+  const price = parsePrice(item.price);
+  const previous = store[id];
+
+  const diff = compare(price, previous);
+
+  store[id] = price;
+
+  results.push({
+    ...item,
+    ...diff
+  });
+}
+
+saveStore(store);
+
+console.log(JSON.stringify(results, null, 2));
 
