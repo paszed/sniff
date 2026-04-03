@@ -26,6 +26,7 @@ async function readStdin() {
 // CLI args
 const args = process.argv.slice(2);
 const showAll = args.includes("--all");
+const dropsOnly = args.includes("--drops-only");
 
 // read input
 const input = await readStdin();
@@ -55,7 +56,15 @@ for (const item of items) {
 saveStore(store);
 
 // output control
-const output = showAll ? results : results.filter(r => r.changed);
+let output;
+
+if (showAll) {
+  output = results;
+} else if (dropsOnly) {
+  output = results.filter(r => r.change_type === "price_drop");
+} else {
+  output = results.filter(r => r.changed);
+}
 
 console.log(JSON.stringify(output, null, 2));
 
