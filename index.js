@@ -47,5 +47,6 @@ for (const item of items) {
 
 saveStore(store);
 
-console.log(JSON.stringify(results, null, 2));
+const onlyChanges = results.filter(r => r.changed);
+console.log(JSON.stringify(onlyChanges, null, 2));
 
