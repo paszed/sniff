@@ -1,0 +1,12 @@
+{
+  "name": "sniff",
+  "version": "0.0.1",
+  "type": "module",
+  "main": "index.js",
+  "bin": {
+    "sniff": "./index.js"
+  },
+  "scripts": {
+    "dev": "node index.js"
+  }
+}
