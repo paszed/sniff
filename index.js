@@ -23,6 +23,22 @@ async function readStdin() {
   });
 }
 
+function notify(result) {
+  if (!result.changed) return;
+
+  if (result.change_type === "price_drop") {
+    console.log(
+      `↓ PRICE DROP: ${result.title} (£${result.old_price} → £${result.new_price})`
+    );
+  }
+
+  if (result.change_type === "price_increase") {
+    console.log(
+      `↑ PRICE INCREASE: ${result.title} (£${result.old_price} → £${result.new_price})`
+    );
+  }
+}
+
 // CLI args
 const args = process.argv.slice(2);
 const showAll = args.includes("--all");
@@ -44,18 +60,21 @@ for (const item of items) {
 
   const diff = compare(price, previous);
 
-  store[id] = price;
-
-  results.push({
+  const result = {
     ...item,
     ...diff
-  });
+  };
+
+  store[id] = price;
+
+  results.push(result);
+
+  notify(result);
 }
 
-// save state
 saveStore(store);
 
-// output control
+// output
 let output;
 
 if (showAll) {
@@ -67,4 +86,3 @@ if (showAll) {
 }
 
 console.log(JSON.stringify(output, null, 2));
-
