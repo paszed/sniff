@@ -1,10 +1,29 @@
-export async function fetchPage(url) {
-  const res = await fetch(url);
+import { fetchWithBrowser } from "./browser.js";
 
-  if (!res.ok) {
-    throw new Error(`Failed to fetch: ${res.status}`);
+export async function fetchPage(url, options = {}) {
+  try {
+    // Use browser if needed (default: true for scraping)
+    if (options.browser !== false) {
+      return await fetchWithBrowser(url, options.selector || "body");
+    }
+
+    const res = await fetch(url);
+
+    if (!res.ok) {
+      throw new Error("HTTP_ERROR");
+    }
+
+    return await res.text();
+  } catch (err) {
+    if (err.message === "HTTP_ERROR") {
+      throw err;
+    }
+
+    if (err.message.includes("fetch")) {
+      throw new Error("NETWORK_ERROR");
+    }
+
+    throw new Error("FETCH_FAILED");
   }
-
-  return await res.text();
 }
 

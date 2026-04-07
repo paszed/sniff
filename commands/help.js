@@ -1,5 +1,7 @@
-export function helpCommand() {
+export function help() {
   console.log(`
+
+  sniff v0.1.0
 Sniff — Track changes in structured data
 
 Usage:

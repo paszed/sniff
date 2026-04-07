@@ -1,39 +1,52 @@
-export async function sendWebhook(result) {
-  const url = process.env.SNIFF_WEBHOOK_URL;
-  if (!url) return;
+import { loadConfig } from "../utils/config.js";
 
-  await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      embeds: [
+export async function notify(changes, meta = {}) {
+  const config = loadConfig();
+  const webhook = config.webhook;
+
+  if (!webhook) {
+    console.log("No webhook set — skipping notification");
+    return;
+  }
+
+  for (const item of changes) {
+    const isDrop = item.new_price < item.old_price;
+
+    const embed = {
+      title: isDrop ? "📉 Price Drop" : "📈 Price Increase",
+      color: isDrop ? 0x22c55e : 0xef4444,
+      fields: [
         {
-          title:
-            result.change_type === "price_drop"
-              ? "📉 Price Drop"
-              : "📈 Price Increase",
-          description: `**${result.title}**\n£${result.old_price} → £${result.new_price}`,
-          color:
-            result.change_type === "price_drop"
-              ? 5763719
-              : 15548997
-        }
-      ]
-    })
-  });
+          name: "Item",
+          value: item.title,
+          inline: false,
+        },
+        {
+          name: "Price",
+          value: `£${item.old_price} → £${item.new_price}`,
+          inline: true,
+        },
+        {
+          name: "Source",
+          value: meta.source || item.link || "unknown",
+          inline: false,
+        },
+      ],
+      timestamp: new Date().toISOString(),
+    };
+
+    try {
+      await fetch(webhook, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          embeds: [embed],
+        }),
+      });
+    } catch (err) {
+      console.error("Failed to send Discord notification:", err.message);
+    }
+  }
 }
-
-export function notify(result) {
-  if (!result.changed) return;
-
-  const msg =
-    result.change_type === "price_drop"
-      ? `↓ PRICE DROP: ${result.title} (£${result.old_price} → £${result.new_price})`
-      : `↑ PRICE INCREASE: ${result.title} (£${result.old_price} → £${result.new_price})`;
-
-  console.log(msg);
-  sendWebhook(result);
-}
-

@@ -1,22 +1,45 @@
-export async function readStdin() {
-  return new Promise((resolve, reject) => {
-    let data = "";
+export function parse(input, url = null) {
+  // ---- already structured (stdin or JSON) ----
+  if (Array.isArray(input)) {
+    return input.map(item => normalize(item, url));
+  }
 
-    process.stdin.setEncoding("utf8");
+  if (typeof input === "object" && input !== null) {
+    return [normalize(input, url)];
+  }
 
-    process.stdin.on("data", (chunk) => {
-      data += chunk;
-    });
+  // ---- HTML string (very simple fallback parsing) ----
+  if (typeof input === "string") {
+    const titleMatch = input.match(/<title>(.*?)<\/title>/i);
+    const priceMatch = input.match(/£\s?\d+(\.\d+)?/);
 
-    process.stdin.on("end", () => {
-      try {
-        const parsed = JSON.parse(data.trim());
-        resolve(parsed);
-      } catch (err) {
-        reject(new Error("Invalid JSON input"));
-      }
-    });
+    return [
+      normalize(
+        {
+          title: titleMatch ? titleMatch[1] : url,
+          price: priceMatch ? priceMatch[0] : null,
+          link: url,
+        },
+        url
+      ),
+    ];
+  }
 
-    process.stdin.on("error", reject);
-  });
+  return [];
+}
+
+// ---- normalize helper ----
+function normalize(item, fallbackUrl) {
+  const rawPrice = item.price || "";
+
+  const numeric = Number(
+    String(rawPrice).replace(/[^\d.]/g, "")
+  );
+
+  return {
+    title: item.title || fallbackUrl || "unknown",
+    price: rawPrice,
+    value: isNaN(numeric) ? null : numeric,
+    link: item.link || fallbackUrl || null,
+  };
 }

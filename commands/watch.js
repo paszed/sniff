@@ -1,31 +1,34 @@
-import { runCommand } from "./run.js";
+import { run } from "./run.js";
 
-export function watchCommand(args) {
+export async function watch(args) {
   // ---- parse interval ----
   const index = args.indexOf("--interval");
+
   const interval =
     index !== -1 && args[index + 1]
       ? Number(args[index + 1])
       : 10;
 
-  if (isNaN(interval) || interval <= 0) {
-    console.log("Invalid interval. Using default: 10s");
-  }
-
   const finalInterval =
     !isNaN(interval) && interval > 0 ? interval : 10;
 
-  console.log(`Watching every ${finalInterval}s...\n`);
+  const url = args[0];
 
-  // ---- first run immediately ----
-  runCommand(args).catch((err) => {
-    console.error("Run failed:", err.message);
-  });
+  if (!url) {
+    console.error("Error: No URL provided for watch");
+    return;
+  }
+
+  console.log(`Watching ${url}`);
+  console.log(`Interval: ${finalInterval}s\n`);
+
+  // ---- first run ----
+  await run([url]);
 
   // ---- loop ----
   setInterval(() => {
-    runCommand(args).catch((err) => {
-      console.error("Run failed:", err.message);
+    run([url]).catch(err => {
+      console.error("Watch error:", err.message);
     });
   }, finalInterval * 1000);
 }
