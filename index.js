@@ -23,32 +23,49 @@ async function readStdin() {
   });
 }
 
-function notify(result) {
-  if (!result.changed) return;
+async function sendWebhook(message) {
+  const url = process.env.SNIFF_WEBHOOK_URL;
+  if (!url) return;
 
-  if (result.change_type === "price_drop") {
-    console.log(
-      `↓ PRICE DROP: ${result.title} (£${result.old_price} → £${result.new_price})`
-    );
-  }
-
-  if (result.change_type === "price_increase") {
-    console.log(
-      `↑ PRICE INCREASE: ${result.title} (£${result.old_price} → £${result.new_price})`
-    );
+  try {
+    await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ content: message })
+    });
+  } catch (err) {
+    console.error("Webhook failed:", err.message);
   }
 }
 
-// CLI args
+function notify(result) {
+  if (!result.changed) return;
+
+  let message;
+
+  if (result.change_type === "price_drop") {
+    message = `↓ PRICE DROP: ${result.title} (£${result.old_price} → £${result.new_price})`;
+  }
+
+  if (result.change_type === "price_increase") {
+    message = `↑ PRICE INCREASE: ${result.title} (£${result.old_price} → £${result.new_price})`;
+  }
+
+  if (message) {
+    console.log(message);
+    sendWebhook(message);
+  }
+}
+
 const args = process.argv.slice(2);
 const showAll = args.includes("--all");
 const dropsOnly = args.includes("--drops-only");
 
-// read input
 const input = await readStdin();
 const items = Array.isArray(input) ? input : [input];
 
-// load state
 const store = loadStore();
 const results = [];
 
@@ -66,7 +83,6 @@ for (const item of items) {
   };
 
   store[id] = price;
-
   results.push(result);
 
   notify(result);
@@ -74,7 +90,6 @@ for (const item of items) {
 
 saveStore(store);
 
-// output
 let output;
 
 if (showAll) {
