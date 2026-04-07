@@ -35,3 +35,5 @@ coverage/
 # editor
 .vscode/
 .idea/
+
+store.json

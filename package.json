@@ -1,15 +1,25 @@
 {
-  "name": "sniff",
-  "version": "0.0.1",
+  "name": "sniff-cli",
+  "version": "0.1.0",
+  "description": "Track changes on web pages via structured data",
   "type": "module",
-  "main": "index.js",
   "bin": {
-    "sniff": "./index.js"
+    "sniff": "./bin/sniff.js"
   },
   "scripts": {
-    "dev": "node index.js"
+    "start": "node bin/sniff.js",
+    "dev": "node bin/sniff.js help"
   },
+  "keywords": [
+    "cli",
+    "monitoring",
+    "scraping",
+    "price-tracking",
+    "automation"
+  ],
+  "author": "",
+  "license": "MIT",
   "dependencies": {
-    "playwright": "^1.59.1"
+    "playwright": "^1.42.0"
   }
 }
