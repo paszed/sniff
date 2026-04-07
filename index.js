@@ -1,65 +1,58 @@
 #!/usr/bin/env node
 
-import { readStdin } from "./core/input.js";
-import { run } from "./core/engine.js";
-import { fetchPage } from "./core/fetch.js";
-import { extractPrice } from "./core/extract.js";
-import { toItem } from "./core/transform.js";
+import { readStdin } from "./utils/parser.js";
+import { loadStore, saveStore } from "./utils/store.js";
+import { compare } from "./utils/comparator.js";
 
-// CLI args
+// OPTIONAL (only used if URL)
+let fetchPrice = null;
+try {
+  const mod = await import("./core/browser.js");
+  fetchPrice = mod.fetchWithBrowser;
+} catch {}
+
 const args = process.argv.slice(2);
 
-const options = {
-  showAll: args.includes("--all"),
-  dropsOnly: args.includes("--drops-only")
-};
+async function main() {
+  const inputArg = args[0];
 
-const watchIndex = args.indexOf("--watch");
-const watchInterval =
-  watchIndex !== -1 ? Number(args[watchIndex + 1]) : null;
+  let items = [];
 
-async function execute() {
-  const arg = args[0];
+  // --- CASE 1: URL ---
+  if (inputArg && inputArg.startsWith("http") && fetchPrice) {
+    const priceText = await fetchPrice(inputArg, ".price_color");
 
-  let items;
-
-  // 🔥 FETCH MODE (URL input)
-  if (arg && arg.startsWith("http")) {
-    try {
-      const html = await fetchPage(arg);
-      const price = extractPrice(html);
-
-      if (!price) {
-        console.error("No price found");
-        process.exit(1);
-      }
-
-      items = [toItem(arg, price)];
-    } catch (err) {
-      console.error("Fetch failed:", err.message);
+    if (!priceText) {
+      console.error("No price found");
       process.exit(1);
     }
-  } else {
-    // 📥 STDIN MODE (pipeline)
+
+    items = [
+      {
+        title: inputArg,
+        price: priceText,
+        link: inputArg
+      }
+    ];
+  }
+
+  // --- CASE 2: STDIN ---
+  else {
     const input = await readStdin();
     items = Array.isArray(input) ? input : [input];
   }
 
-  const output = run(items, options);
+  // --- LOAD PREVIOUS STATE ---
+  const prev = loadStore();
 
-  console.log(JSON.stringify(output, null, 2));
+  // --- COMPARE ---
+  const result = compare(prev, items);
+
+  // --- SAVE NEW STATE ---
+  saveStore(result);
+
+  // --- OUTPUT ---
+  console.log(JSON.stringify(result, null, 2));
 }
 
-// execution
-if (watchInterval) {
-  console.log(`Watching every ${watchInterval}s...\n`);
-
-  while (true) {
-    await execute();
-    await new Promise((r) =>
-      setTimeout(r, watchInterval * 1000)
-    );
-  }
-} else {
-  await execute();
-}
+main();

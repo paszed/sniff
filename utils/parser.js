@@ -1,19 +1,22 @@
-export function parsePrice(price) {
-  // already a number
-  if (typeof price === "number") {
-    return price;
-  }
+export async function readStdin() {
+  return new Promise((resolve, reject) => {
+    let data = "";
 
-  // handle strings like "£51.77", "$10", "EUR 99.99"
-  const cleaned = String(price)
-    .replace(",", ".")        // handle comma decimals
-    .replace(/[^\d.]/g, "");  // remove currency + text
+    process.stdin.setEncoding("utf8");
 
-  const value = Number(cleaned);
+    process.stdin.on("data", (chunk) => {
+      data += chunk;
+    });
 
-  if (isNaN(value)) {
-    return null;
-  }
+    process.stdin.on("end", () => {
+      try {
+        const parsed = JSON.parse(data.trim());
+        resolve(parsed);
+      } catch (err) {
+        reject(new Error("Invalid JSON input"));
+      }
+    });
 
-  return value;
+    process.stdin.on("error", reject);
+  });
 }
