@@ -59,45 +59,63 @@ function notify(result) {
   }
 }
 
+// CLI args
 const args = process.argv.slice(2);
 const showAll = args.includes("--all");
 const dropsOnly = args.includes("--drops-only");
 
-const input = await readStdin();
-const items = Array.isArray(input) ? input : [input];
+const watchIndex = args.indexOf("--watch");
+const watchInterval = watchIndex !== -1 ? Number(args[watchIndex + 1]) : null;
 
-const store = loadStore();
-const results = [];
+async function run() {
+  const input = await readStdin();
+  const items = Array.isArray(input) ? input : [input];
 
-for (const item of items) {
-  const id = item.link || item.title;
+  const store = loadStore();
+  const results = [];
 
-  const price = parsePrice(item.price);
-  const previous = store[id];
+  for (const item of items) {
+    const id = item.link || item.title;
 
-  const diff = compare(price, previous);
+    const price = parsePrice(item.price);
+    const previous = store[id];
 
-  const result = {
-    ...item,
-    ...diff
-  };
+    const diff = compare(price, previous);
 
-  store[id] = price;
-  results.push(result);
+    const result = {
+      ...item,
+      ...diff
+    };
 
-  notify(result);
+    store[id] = price;
+    results.push(result);
+
+    notify(result);
+  }
+
+  saveStore(store);
+
+  let output;
+
+  if (showAll) {
+    output = results;
+  } else if (dropsOnly) {
+    output = results.filter(r => r.change_type === "price_drop");
+  } else {
+    output = results.filter(r => r.changed);
+  }
+
+  console.log(JSON.stringify(output, null, 2));
 }
 
-saveStore(store);
+// execution
+if (watchInterval) {
+  console.log(`Watching every ${watchInterval}s...\n`);
 
-let output;
-
-if (showAll) {
-  output = results;
-} else if (dropsOnly) {
-  output = results.filter(r => r.change_type === "price_drop");
+  while (true) {
+    await run();
+    await new Promise(r => setTimeout(r, watchInterval * 1000));
+  }
 } else {
-  output = results.filter(r => r.changed);
+  await run();
 }
-
-console.log(JSON.stringify(output, null, 2));
