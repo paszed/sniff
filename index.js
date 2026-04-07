@@ -23,7 +23,8 @@ async function readStdin() {
   });
 }
 
-async function sendWebhook(message) {
+// Discord webhook (embed)
+async function sendWebhook(result) {
   const url = process.env.SNIFF_WEBHOOK_URL;
   if (!url) return;
 
@@ -33,13 +34,28 @@ async function sendWebhook(message) {
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({ content: message })
+      body: JSON.stringify({
+        embeds: [
+          {
+            title:
+              result.change_type === "price_drop"
+                ? "📉 Price Drop"
+                : "📈 Price Increase",
+            description: `**${result.title}**\n£${result.old_price} → £${result.new_price}`,
+            color:
+              result.change_type === "price_drop"
+                ? 5763719
+                : 15548997
+          }
+        ]
+      })
     });
   } catch (err) {
     console.error("Webhook failed:", err.message);
   }
 }
 
+// Notify (console + webhook)
 function notify(result) {
   if (!result.changed) return;
 
@@ -47,15 +63,13 @@ function notify(result) {
 
   if (result.change_type === "price_drop") {
     message = `↓ PRICE DROP: ${result.title} (£${result.old_price} → £${result.new_price})`;
-  }
-
-  if (result.change_type === "price_increase") {
+  } else if (result.change_type === "price_increase") {
     message = `↑ PRICE INCREASE: ${result.title} (£${result.old_price} → £${result.new_price})`;
   }
 
   if (message) {
     console.log(message);
-    sendWebhook(message);
+    sendWebhook(result);
   }
 }
 
@@ -65,8 +79,10 @@ const showAll = args.includes("--all");
 const dropsOnly = args.includes("--drops-only");
 
 const watchIndex = args.indexOf("--watch");
-const watchInterval = watchIndex !== -1 ? Number(args[watchIndex + 1]) : null;
+const watchInterval =
+  watchIndex !== -1 ? Number(args[watchIndex + 1]) : null;
 
+// Core logic
 async function run() {
   const input = await readStdin();
   const items = Array.isArray(input) ? input : [input];
@@ -100,21 +116,25 @@ async function run() {
   if (showAll) {
     output = results;
   } else if (dropsOnly) {
-    output = results.filter(r => r.change_type === "price_drop");
+    output = results.filter(
+      (r) => r.change_type === "price_drop"
+    );
   } else {
-    output = results.filter(r => r.changed);
+    output = results.filter((r) => r.changed);
   }
 
   console.log(JSON.stringify(output, null, 2));
 }
 
-// execution
+// Execution
 if (watchInterval) {
   console.log(`Watching every ${watchInterval}s...\n`);
 
   while (true) {
     await run();
-    await new Promise(r => setTimeout(r, watchInterval * 1000));
+    await new Promise((r) =>
+      setTimeout(r, watchInterval * 1000)
+    );
   }
 } else {
   await run();
