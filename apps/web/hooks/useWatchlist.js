@@ -16,40 +16,61 @@ export default function useWatchlist(user) {
   }, [user]);
 
   async function loadItems() {
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from("tracked_items")
       .select("*")
+      .eq("user_id", user.id)
       .order("created_at", { ascending: false });
 
-    if (!error && data) {
-      setWatchlist(data);
-    }
+    setWatchlist(data || []);
   }
 
   async function addItem(item) {
     if (!user || !item) return;
 
-    const { error } = await supabase.from("tracked_items").insert({
-      user_id: user.id,
-      title: item.title,
-      url: item.url,
-      price: item.price,
-    });
+    const { data: existing } = await supabase
+      .from("tracked_items")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("url", item.url)
+      .maybeSingle();
 
-    if (!error) {
-      loadItems();
+    if (existing) {
+      const oldPrice = Number(existing.price);
+      const newPrice = Number(item.price);
+
+      let status = "same";
+      if (newPrice < oldPrice) status = "down";
+      if (newPrice > oldPrice) status = "up";
+
+      await supabase
+        .from("tracked_items")
+        .update({
+          title: item.title,
+          image: item.image,
+          previous_price: oldPrice,
+          price: newPrice,
+          status,
+        })
+        .eq("id", existing.id);
+    } else {
+      await supabase.from("tracked_items").insert({
+        user_id: user.id,
+        title: item.title,
+        url: item.url,
+        image: item.image,
+        price: Number(item.price),
+        previous_price: Number(item.price),
+        status: "same",
+      });
     }
+
+    loadItems();
   }
 
   async function removeItem(id) {
-    const { error } = await supabase
-      .from("tracked_items")
-      .delete()
-      .eq("id", id);
-
-    if (!error) {
-      loadItems();
-    }
+    await supabase.from("tracked_items").delete().eq("id", id);
+    loadItems();
   }
 
   return {

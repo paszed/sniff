@@ -13,6 +13,21 @@ export default function ProductCard({ item, onSave }) {
       ? item.image
       : "https://via.placeholder.com/120x120?text=Product";
 
+  const oldPrice = Number(item.previous_price);
+  const newPrice = Number(item.price);
+
+  let badge = null;
+
+  if (!isNaN(oldPrice) && oldPrice > 0) {
+    if (newPrice < oldPrice) {
+      badge = { text: "↓ Price Dropped", color: "#15803d", bg: "#dcfce7" };
+    } else if (newPrice > oldPrice) {
+      badge = { text: "↑ Price Increased", color: "#b91c1c", bg: "#fee2e2" };
+    } else {
+      badge = { text: "— No Change", color: "#475569", bg: "#e2e8f0" };
+    }
+  }
+
   return (
     <section style={card}>
       <div style={thumb}>
@@ -26,7 +41,21 @@ export default function ProductCard({ item, onSave }) {
 
       <div style={content}>
         <h3 style={title}>{item.title}</h3>
+
         <p style={price}>{item.price}</p>
+
+        {badge && (
+          <span
+            style={{
+              ...badgeStyle,
+              color: badge.color,
+              background: badge.bg,
+            }}
+          >
+            {badge.text}
+          </span>
+        )}
+
         <p style={url}>{item.url}</p>
 
         <button style={button} onClick={() => onSave(item)}>
@@ -81,6 +110,14 @@ const price = {
   fontSize: "34px",
   fontWeight: "900",
   color: theme.colors.accent,
+};
+
+const badgeStyle = {
+  alignSelf: "flex-start",
+  padding: "6px 10px",
+  borderRadius: "999px",
+  fontSize: "13px",
+  fontWeight: "700",
 };
 
 const url = {

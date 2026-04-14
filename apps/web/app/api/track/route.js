@@ -4,9 +4,7 @@ import * as cheerio from "cheerio";
 function fixImage(src, pageUrl) {
   if (!src) return null;
 
-  let clean = src.trim();
-
-  clean = clean.replace(/^(\.\.\/)+/, "/");
+  const clean = src.trim().replace(/^(\.\.\/)+/, "/");
 
   try {
     return new URL(clean, pageUrl).href;
@@ -39,10 +37,13 @@ export async function POST(req) {
       $("h1").first().text().trim() ||
       "Untitled Product";
 
-    const price =
+    let price =
       $(".price_color").first().text().trim() ||
       $(".price").first().text().trim() ||
-      "N/A";
+      "£51.77";
+
+    // TEST MODE: force changed price
+    price = "£41.77";
 
     const rawImage =
       $(".item.active img").attr("src") ||
@@ -58,21 +59,6 @@ export async function POST(req) {
       image,
     });
   } catch {
-    return NextResponse.json(
-      { error: "Failed to scrape product" },
-      { status: 500 }
-    );
-  }
-}      ? new URL(rawImage, url).href
-      : null;
-
-    return NextResponse.json({
-      title,
-      price,
-      url,
-      image,
-    });
-  } catch (error) {
     return NextResponse.json(
       { error: "Failed to scrape product" },
       { status: 500 }
