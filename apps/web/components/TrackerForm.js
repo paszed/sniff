@@ -1,13 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import theme from "../styles/theme";
 
 export default function TrackerForm({ onResult }) {
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
 
-  async function handleTrack() {
-    if (!url.trim()) return;
+  async function handleSubmit(e) {
+    e.preventDefault();
+    if (!url) return;
 
     setLoading(true);
 
@@ -21,61 +23,56 @@ export default function TrackerForm({ onResult }) {
       });
 
       const data = await res.json();
-
-      const item = data?.data?.[0] || null;
-
-      if (item) {
-        onResult(item);
-      }
-    } catch (err) {
-      console.error(err);
-    }
-
-    setLoading(false);
-  }
-
-  function onKeyDown(e) {
-    if (e.key === "Enter") {
-      handleTrack();
+      onResult(data);
+      setUrl("");
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
     }
   }
 
   return (
-    <div style={row}>
+    <form onSubmit={handleSubmit} style={form}>
       <input
+        type="url"
+        placeholder="Paste product URL..."
         value={url}
         onChange={(e) => setUrl(e.target.value)}
-        onKeyDown={onKeyDown}
-        placeholder="Paste product URL..."
         style={input}
       />
 
-      <button onClick={handleTrack} style={button}>
+      <button type="submit" style={button}>
         {loading ? "..." : "Track"}
       </button>
-    </div>
+    </form>
   );
 }
 
-const row = {
-  display: "flex",
+const form = {
+  display: "grid",
+  gridTemplateColumns: "1fr auto",
   gap: "12px",
-  marginBottom: "24px",
 };
 
 const input = {
-  flex: 1,
-  padding: "16px",
-  borderRadius: "12px",
-  border: "1px solid #ddd",
-  fontSize: "18px",
+  height: "56px",
+  borderRadius: theme.radius.md,
+  border: `1px solid ${theme.colors.border}`,
+  background: theme.colors.surfaceStrong,
+  color: theme.colors.text,
+  padding: "0 18px",
+  fontSize: "16px",
+  outline: "none",
 };
 
 const button = {
-  padding: "12px 18px",
+  height: "56px",
+  padding: "0 22px",
   border: "none",
-  borderRadius: "12px",
-  background: "black",
-  color: "white",
+  borderRadius: theme.radius.md,
+  background: theme.colors.accent,
+  color: "#fff",
+  fontWeight: "700",
   cursor: "pointer",
 };

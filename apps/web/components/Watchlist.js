@@ -1,83 +1,144 @@
-"use client";
-
 export default function Watchlist({ items, onRemove }) {
-  if (!items?.length) return null;
+  if (!items?.length) {
+    return (
+      <section style={section}>
+        <div style={headerRow}>
+          <h2 style={title}>Watchlist</h2>
+          <span style={badge}>0 items</span>
+        </div>
+
+        <div style={emptyBox}>
+          <p style={emptyTitle}>No tracked items yet</p>
+          <p style={emptyText}>
+            Add a product URL above and start tracking price changes.
+          </p>
+        </div>
+      </section>
+    );
+  }
 
   return (
-    <section>
-      <h2 style={heading}>Watchlist</h2>
+    <section style={section}>
+      <div style={headerRow}>
+        <h2 style={title}>Watchlist</h2>
+        <span style={badge}>{items.length} items</span>
+      </div>
 
-      {items.map((item) => (
-        <div key={item.url} style={row}>
-          <div style={{ flex: 1 }}>
-            <strong style={name}>{item.title}</strong>
-
-            <div style={price}>
-              {item.price ? `£${item.price}` : "--"}
+      <div style={list}>
+        {items.map((item) => (
+          <div key={item.id} style={card}>
+            <div style={left}>
+              <h3 style={itemTitle}>{item.title}</h3>
+              <div style={price}>{item.price}</div>
+              <p style={url}>{item.url}</p>
             </div>
 
-            <a
-              href={item.url}
-              target="_blank"
-              rel="noreferrer"
-              style={link}
+            <button
+              onClick={() => onRemove(item.id)}
+              style={removeBtn}
             >
-              {item.url}
-            </a>
+              Remove
+            </button>
           </div>
-
-          <button
-            onClick={() => onRemove(item.url)}
-            style={button}
-          >
-            Remove
-          </button>
-        </div>
-      ))}
+        ))}
+      </div>
     </section>
   );
 }
 
-const heading = {
-  fontSize: "34px",
+const section = {
+  marginTop: "32px",
+};
+
+const headerRow = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
   marginBottom: "16px",
 };
 
-const row = {
-  display: "flex",
-  gap: "16px",
-  alignItems: "center",
-  background: "#fff",
-  padding: "18px",
-  borderRadius: "14px",
-  marginBottom: "12px",
-  boxShadow: "0 4px 18px rgba(0,0,0,0.04)",
+const title = {
+  fontSize: "38px",
+  fontWeight: "800",
+  margin: 0,
+  color: "#ffffff",
 };
 
-const name = {
-  display: "block",
-  fontSize: "18px",
+const badge = {
+  fontSize: "14px",
+  color: "#cbd5e1",
+  background: "rgba(255,255,255,0.06)",
+  border: "1px solid rgba(255,255,255,0.08)",
+  padding: "6px 10px",
+  borderRadius: "999px",
+};
+
+const list = {
+  display: "grid",
+  gap: "16px",
+};
+
+const card = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  gap: "20px",
+  padding: "22px",
+  borderRadius: "18px",
+  background: "#ffffff",
+  boxShadow: "0 10px 30px rgba(0,0,0,0.12)",
+};
+
+const left = {
+  flex: 1,
+};
+
+const itemTitle = {
+  margin: "0 0 10px",
+  fontSize: "28px",
+  fontWeight: "800",
+  color: "#0f172a",
 };
 
 const price = {
-  marginTop: "6px",
-  fontWeight: 700,
-  fontSize: "24px",
+  fontSize: "34px",
+  fontWeight: "900",
+  color: "#2563eb",
+  marginBottom: "8px",
 };
 
-const link = {
-  display: "block",
-  marginTop: "6px",
-  color: "#666",
-  textDecoration: "none",
+const url = {
+  margin: 0,
+  fontSize: "14px",
+  color: "#64748b",
   wordBreak: "break-all",
-  fontSize: "13px",
 };
 
-const button = {
-  padding: "10px 14px",
-  border: "1px solid #ddd",
-  borderRadius: "10px",
-  background: "#f8f8f8",
+const removeBtn = {
+  border: "none",
+  borderRadius: "12px",
+  padding: "12px 16px",
+  background: "#fee2e2",
+  color: "#b91c1c",
+  fontWeight: "700",
   cursor: "pointer",
+};
+
+const emptyBox = {
+  padding: "28px",
+  borderRadius: "18px",
+  background: "rgba(255,255,255,0.04)",
+  border: "1px solid rgba(255,255,255,0.08)",
+};
+
+const emptyTitle = {
+  margin: "0 0 8px",
+  fontSize: "22px",
+  fontWeight: "700",
+  color: "#ffffff",
+};
+
+const emptyText = {
+  margin: 0,
+  color: "#94a3b8",
 };
