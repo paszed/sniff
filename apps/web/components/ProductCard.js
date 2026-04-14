@@ -1,93 +1,103 @@
+"use client";
+
+import { useState } from "react";
+import theme from "../styles/theme";
+
 export default function ProductCard({ item, onSave }) {
+  const [failed, setFailed] = useState(false);
+
   if (!item) return null;
 
+  const src =
+    !failed && item.image
+      ? item.image
+      : "https://via.placeholder.com/120x120?text=Product";
+
   return (
-    <section style={wrap}>
-      <div style={card}>
-        <div style={content}>
-          <p style={eyebrow}>TRACKED RESULT</p>
+    <section style={card}>
+      <div style={thumb}>
+        <img
+          src={src}
+          alt={item.title}
+          style={imgStyle}
+          onError={() => setFailed(true)}
+        />
+      </div>
 
-          <h2 style={title}>{item.title}</h2>
+      <div style={content}>
+        <h3 style={title}>{item.title}</h3>
+        <p style={price}>{item.price}</p>
+        <p style={url}>{item.url}</p>
 
-          <div style={price}>{item.price}</div>
-
-          <p style={url}>{item.url}</p>
-        </div>
-
-        <div style={actions}>
-          <button
-            onClick={() => onSave(item)}
-            style={button}
-          >
-            Save to Watchlist
-          </button>
-        </div>
+        <button style={button} onClick={() => onSave(item)}>
+          Save to Watchlist
+        </button>
       </div>
     </section>
   );
 }
 
-const wrap = {
+const card = {
   marginTop: "28px",
+  display: "grid",
+  gridTemplateColumns: "120px 1fr",
+  gap: "20px",
+  background: "#ffffff",
+  borderRadius: theme.radius.lg,
+  padding: "22px",
+  boxShadow: theme.shadow.card,
+  alignItems: "center",
 };
 
-const card = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  gap: "24px",
-  padding: "28px",
-  borderRadius: "24px",
-  background: "#ffffff",
-  boxShadow: "0 20px 50px rgba(0,0,0,0.18)",
+const thumb = {
+  width: "120px",
+  height: "120px",
+  borderRadius: "16px",
+  overflow: "hidden",
+  background: "#f3f4f6",
+};
+
+const imgStyle = {
+  width: "100%",
+  height: "100%",
+  objectFit: "cover",
 };
 
 const content = {
-  flex: 1,
-};
-
-const eyebrow = {
-  margin: "0 0 10px",
-  fontSize: "12px",
-  fontWeight: "800",
-  letterSpacing: "0.12em",
-  color: "#2563eb",
+  display: "flex",
+  flexDirection: "column",
+  gap: "8px",
 };
 
 const title = {
-  margin: "0 0 12px",
-  fontSize: "42px",
-  lineHeight: "1.1",
-  fontWeight: "900",
-  color: "#0f172a",
+  margin: 0,
+  fontSize: "28px",
+  fontWeight: "800",
+  color: "#111827",
 };
 
 const price = {
-  fontSize: "54px",
+  margin: 0,
+  fontSize: "34px",
   fontWeight: "900",
-  color: "#2563eb",
-  marginBottom: "12px",
+  color: theme.colors.accent,
 };
 
 const url = {
   margin: 0,
+  color: "#6b7280",
   fontSize: "14px",
-  color: "#64748b",
-  wordBreak: "break-all",
-};
-
-const actions = {
-  display: "flex",
-  alignItems: "center",
+  overflowWrap: "anywhere",
 };
 
 const button = {
+  marginTop: "10px",
+  alignSelf: "flex-start",
   border: "none",
-  borderRadius: "14px",
-  padding: "14px 18px",
-  background: "#2563eb",
+  background: "#111827",
   color: "#ffffff",
-  fontWeight: "800",
+  padding: "12px 16px",
+  borderRadius: "12px",
+  fontWeight: "700",
   cursor: "pointer",
-  whiteSpace: "nowrap",
 };

@@ -1,77 +1,43 @@
-export default function Watchlist({ items, onRemove }) {
-  if (!items?.length) {
-    return (
-      <section style={section}>
-        <div style={headerRow}>
-          <h2 style={title}>Watchlist</h2>
-          <span style={badge}>0 items</span>
-        </div>
+import theme from "../styles/theme";
 
-        <div style={emptyBox}>
-          <p style={emptyTitle}>No tracked items yet</p>
-          <p style={emptyText}>
-            Add a product URL above and start tracking price changes.
-          </p>
-        </div>
-      </section>
-    );
+export default function WatchList({ items, onRemove }) {
+  if (!items.length) {
+    return <div style={empty}>No tracked products yet.</div>;
   }
 
   return (
-    <section style={section}>
-      <div style={headerRow}>
-        <h2 style={title}>Watchlist</h2>
-        <span style={badge}>{items.length} items</span>
-      </div>
+    <div style={list}>
+      {items.map((item, index) => {
+        const image =
+          item.image ||
+          "https://via.placeholder.com/96x96?text=Item";
 
-      <div style={list}>
-        {items.map((item) => (
-          <div key={item.id} style={card}>
+        return (
+          <article key={item.id || index} style={card}>
             <div style={left}>
-              <h3 style={itemTitle}>{item.title}</h3>
-              <div style={price}>{item.price}</div>
-              <p style={url}>{item.url}</p>
+              <div style={thumbWrap}>
+                <img src={image} alt={item.title} style={thumb} />
+              </div>
+
+              <div style={meta}>
+                <h3 style={title}>{item.title}</h3>
+                <p style={price}>{item.price}</p>
+                <p style={url}>{item.url}</p>
+              </div>
             </div>
 
             <button
-              onClick={() => onRemove(item.id)}
               style={removeBtn}
+              onClick={() => onRemove(item.id)}
             >
               Remove
             </button>
-          </div>
-        ))}
-      </div>
-    </section>
+          </article>
+        );
+      })}
+    </div>
   );
 }
-
-const section = {
-  marginTop: "32px",
-};
-
-const headerRow = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  marginBottom: "16px",
-};
-
-const title = {
-  fontSize: "38px",
-  fontWeight: "800",
-  margin: 0,
-  color: "#ffffff",
-};
-
-const badge = {
-  fontSize: "14px",
-  color: "#cbd5e1",
-  background: "rgba(255,255,255,0.06)",
-  border: "1px solid rgba(255,255,255,0.08)",
-  padding: "6px 10px",
-  borderRadius: "999px",
-};
 
 const list = {
   display: "grid",
@@ -82,63 +48,75 @@ const card = {
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center",
-  gap: "20px",
+  gap: "24px",
   padding: "22px",
-  borderRadius: "18px",
+  borderRadius: theme.radius.lg,
   background: "#ffffff",
-  boxShadow: "0 10px 30px rgba(0,0,0,0.12)",
+  boxShadow: theme.shadow.card,
 };
 
 const left = {
+  display: "flex",
+  gap: "18px",
+  alignItems: "center",
+  minWidth: 0,
   flex: 1,
 };
 
-const itemTitle = {
-  margin: "0 0 10px",
+const thumbWrap = {
+  width: "96px",
+  height: "96px",
+  borderRadius: "18px",
+  overflow: "hidden",
+  background: "#f3f4f6",
+  flexShrink: 0,
+};
+
+const thumb = {
+  width: "100%",
+  height: "100%",
+  objectFit: "cover",
+};
+
+const meta = {
+  minWidth: 0,
+};
+
+const title = {
+  margin: 0,
   fontSize: "28px",
   fontWeight: "800",
-  color: "#0f172a",
+  color: "#111827",
 };
 
 const price = {
-  fontSize: "34px",
+  margin: "6px 0",
+  fontSize: "38px",
   fontWeight: "900",
-  color: "#2563eb",
-  marginBottom: "8px",
+  color: theme.colors.accent,
 };
 
 const url = {
   margin: 0,
-  fontSize: "14px",
-  color: "#64748b",
-  wordBreak: "break-all",
+  fontSize: "13px",
+  color: "#6b7280",
+  overflowWrap: "anywhere",
 };
 
 const removeBtn = {
+  padding: "10px 14px",
   border: "none",
   borderRadius: "12px",
-  padding: "12px 16px",
-  background: "#fee2e2",
-  color: "#b91c1c",
+  background: "#ffe4e6",
+  color: "#be123c",
   fontWeight: "700",
   cursor: "pointer",
+  flexShrink: 0,
 };
 
-const emptyBox = {
-  padding: "28px",
-  borderRadius: "18px",
-  background: "rgba(255,255,255,0.04)",
-  border: "1px solid rgba(255,255,255,0.08)",
-};
-
-const emptyTitle = {
-  margin: "0 0 8px",
-  fontSize: "22px",
-  fontWeight: "700",
-  color: "#ffffff",
-};
-
-const emptyText = {
-  margin: 0,
-  color: "#94a3b8",
+const empty = {
+  padding: "24px",
+  borderRadius: theme.radius.lg,
+  background: "#ffffff",
+  color: "#6b7280",
 };
