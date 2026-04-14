@@ -1,12 +1,12 @@
-import { fetchPage } from "../core/fetch.js";
-import { fetchWithBrowser } from "../core/browser.js";
-import { parse } from "../utils/parser.js";
-import { loadStore, saveStore } from "../utils/store.js";
-import { compare } from "../utils/comparator.js";
-import { formatOutput } from "../utils/output.js";
-import { notify } from "../core/notify.js";
+import { fetchPage } from "./fetch.js";
+import { fetchWithBrowser } from "./browser.js";
+import { notify } from "./notify.js";
 
-// ---- helper: read stdin ----
+import { parse } from "../lib/parser.js";
+import { compare } from "../lib/comparator.js";
+import { loadStore, saveStore } from "../lib/store.js";
+import { formatOutput } from "../lib/output.js";
+
 async function readStdin() {
   if (process.stdin.isTTY) return null;
 
@@ -15,7 +15,7 @@ async function readStdin() {
 
     process.stdin.setEncoding("utf8");
 
-    process.stdin.on("data", (chunk) => {
+    process.stdin.on("data", chunk => {
       data += chunk;
     });
 
@@ -27,13 +27,11 @@ async function readStdin() {
   });
 }
 
-// ---- main ----
-export async function run(args) {
+export async function runEngine(args = []) {
   let inputData;
   let url = null;
 
   try {
-    // 1️⃣ Try stdin first
     const stdin = await readStdin();
 
     if (stdin) {
@@ -44,7 +42,6 @@ export async function run(args) {
         return;
       }
     } else {
-      // 2️⃣ URL mode
       url = args[0];
 
       if (!url) {
@@ -57,14 +54,12 @@ export async function run(args) {
       try {
         html = await fetchPage(url);
       } catch {
-        // fallback to browser
         html = await fetchWithBrowser(url, "body");
       }
 
       inputData = parse(html, url);
     }
 
-    // 3️⃣ normalize to array
     const items = Array.isArray(inputData)
       ? inputData
       : [inputData];
@@ -74,27 +69,20 @@ export async function run(args) {
       return;
     }
 
-    // 4️⃣ load previous state
     const previous = loadStore();
-
-    // 5️⃣ compare
     const results = compare(previous, items);
 
-    // 6️⃣ save new state
     saveStore(items);
 
-    // 7️⃣ output (always)
     console.log(formatOutput(results));
 
-    // 8️⃣ notify (ONLY if changed)
-    const changed = results.filter((r) => r.changed);
+    const changed = results.filter(item => item.changed);
 
-    if (changed.length) {
+    if (changed.length > 0) {
       await notify(changed, { source: url });
     }
 
     return results;
-
   } catch (err) {
     console.error("Sniff failed:", err.message);
   }

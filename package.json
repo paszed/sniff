@@ -1,15 +1,22 @@
 {
-  "name": "sniff-cli",
+  "name": "sniff",
   "version": "0.1.0",
   "description": "Track changes on web pages via structured data",
   "type": "module",
   "bin": {
     "sniff": "./bin/sniff.js"
   },
+  "main": "./index.js",
   "scripts": {
     "start": "node bin/sniff.js",
-    "dev": "node bin/sniff.js help"
+    "dev": "node bin/sniff.js help",
+    "web": "npm run dev --workspace=apps/web",
+    "mobile": "npm run start --workspace=apps/mobile"
   },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "keywords": [
     "cli",
     "monitoring",
