@@ -1,39 +1,15 @@
-import { chromium } from "playwright";
+export async function extractData(html, url) {
+  const titleMatch = html.match(/<title>(.*?)<\/title>/i);
+  const priceMatch = html.match(/£\s?(\d+\.\d+|\d+)/i);
 
-export async function extract(url) {
-  const browser = await chromium.launch();
-  const page = await browser.newPage();
+  const title = titleMatch ? titleMatch[1].trim() : "Unknown";
+  const price = priceMatch ? priceMatch[1] : null;
 
-  try {
-    await page.goto(url, { waitUntil: "domcontentloaded" });
-
-    // --- basic extraction (books.toscrape compatible) ---
-    const title = await page
-      .$eval("h1", el => el.textContent.trim())
-      .catch(() => null);
-
-    const price = await page
-      .$eval(".price_color", el => el.textContent.trim())
-      .catch(() => null);
-
-    // fallback: try meta title if h1 fails
-    const fallbackTitle = await page
-      .$eval("title", el => el.textContent.trim())
-      .catch(() => null);
-
-    const result = [
-      {
-        title: title || fallbackTitle || url,
-        price,
-        link: url,
-      },
-    ];
-
-    await browser.close();
-    return result;
-  } catch (err) {
-    await browser.close();
-    console.error("Extraction failed:", err.message);
-    return [];
-  }
+  return [
+    {
+      title,
+      price,
+      url
+    }
+  ];
 }

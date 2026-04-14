@@ -1,18 +1,15 @@
-export async function readStdin() {
-  return new Promise((resolve) => {
-    let data = "";
+export async function getInput(source) {
+  if (source) {
+    return source;
+  }
 
-    process.stdin.on("data", (chunk) => {
-      data += chunk;
-    });
+  const chunks = [];
 
-    process.stdin.on("end", () => {
-      try {
-        resolve(JSON.parse(data));
-      } catch {
-        console.error("Invalid JSON input");
-        process.exit(1);
-      }
-    });
-  });
+  for await (const chunk of process.stdin) {
+    chunks.push(chunk);
+  }
+
+  const text = Buffer.concat(chunks).toString().trim();
+
+  return text;
 }
