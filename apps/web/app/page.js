@@ -11,14 +11,28 @@ export default function HomePage() {
 
   useEffect(() => {
     const saved = localStorage.getItem("sniff-watchlist");
-    if (saved) {
-      setWatchlist(JSON.parse(saved));
-    }
+    if (saved) setWatchlist(JSON.parse(saved));
   }, []);
 
   useEffect(() => {
     localStorage.setItem("sniff-watchlist", JSON.stringify(watchlist));
   }, [watchlist]);
+
+  async function fetchTrack(targetUrl) {
+    const res = await fetch("/api/track", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ url: targetUrl })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data.error || "Failed");
+
+    return data.data?.[0];
+  }
 
   async function handleTrack() {
     if (!url.trim()) return;
@@ -28,19 +42,8 @@ export default function HomePage() {
     setItems([]);
 
     try {
-      const res = await fetch("/api/track", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ url })
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) throw new Error(data.error || "Failed");
-
-      setItems(data.data || []);
+      const item = await fetchTrack(url);
+      setItems(item ? [item] : []);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -52,11 +55,55 @@ export default function HomePage() {
     const exists = watchlist.find((x) => x.url === item.url);
     if (exists) return;
 
-    setWatchlist([item, ...watchlist]);
+    setWatchlist([{ ...item, status: "new" }, ...watchlist]);
   }
 
-  function removeItem(url) {
-    setWatchlist(watchlist.filter((item) => item.url !== url));
+  function removeItem(targetUrl) {
+    setWatchlist(watchlist.filter((item) => item.url !== targetUrl));
+  }
+
+  async function refreshItem(saved) {
+    try {
+      const latest = await fetchTrack(saved.url);
+      if (!latest) return;
+
+      const oldPrice = Number(saved.price);
+      const newPrice = Number(latest.price);
+
+      let status = "unchanged";
+      if (newPrice < oldPrice) status = "down";
+      if (newPrice > oldPrice) status = "up";
+
+      setWatchlist((prev) =>
+        prev.map((item) =>
+          item.url === saved.url
+            ? {
+                ...latest,
+                previousPrice: saved.price,
+                status
+              }
+            : item
+        )
+      );
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  function statusText(item) {
+    if (item.status === "down")
+      return `↘ Dropped from £${item.previousPrice}`;
+    if (item.status === "up")
+      return `↗ Increased from £${item.previousPrice}`;
+    if (item.status === "unchanged")
+      return "• No change";
+    return "";
+  }
+
+  function statusColor(item) {
+    if (item.status === "down") return "#0a7f2e";
+    if (item.status === "up") return "#b00020";
+    return "#666";
   }
 
   return (
@@ -165,28 +212,56 @@ export default function HomePage() {
                   background: "white",
                   padding: "18px",
                   borderRadius: "14px",
-                  marginBottom: "12px",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center"
+                  marginBottom: "12px"
                 }}
               >
-                <div>
-                  <strong>{item.title}</strong>
-                  <div>£{item.price}</div>
+                <strong>{item.title}</strong>
+                <div style={{ fontSize: "28px", fontWeight: "800" }}>
+                  £{item.price}
                 </div>
 
-                <button
-                  onClick={() => removeItem(item.url)}
+                <div
                   style={{
-                    padding: "8px 12px",
-                    border: "none",
-                    borderRadius: "8px",
-                    background: "#eee"
+                    color: statusColor(item),
+                    fontSize: "14px",
+                    marginTop: "6px"
                   }}
                 >
-                  Remove
-                </button>
+                  {statusText(item)}
+                </div>
+
+                <div
+                  style={{
+                    display: "flex",
+                    gap: "10px",
+                    marginTop: "12px"
+                  }}
+                >
+                  <button
+                    onClick={() => refreshItem(item)}
+                    style={{
+                      padding: "8px 12px",
+                      border: "none",
+                      borderRadius: "8px",
+                      background: "#111",
+                      color: "white"
+                    }}
+                  >
+                    Refresh
+                  </button>
+
+                  <button
+                    onClick={() => removeItem(item.url)}
+                    style={{
+                      padding: "8px 12px",
+                      border: "none",
+                      borderRadius: "8px",
+                      background: "#eee"
+                    }}
+                  >
+                    Remove
+                  </button>
+                </div>
               </div>
             ))}
           </>
@@ -194,4 +269,4 @@ export default function HomePage() {
       </div>
     </main>
   );
-}
+}  
