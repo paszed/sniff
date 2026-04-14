@@ -1,33 +1,19 @@
+"use client";
+
+import useAuth from "../../hooks/useAuth";
+import useWatchlist from "../../hooks/useWatchList";
 import theme from "../../styles/theme";
 
 export default function DashboardPage() {
-  const stats = [
-    { label: "Tracked Items", value: "12" },
-    { label: "Price Drops", value: "3" },
-    { label: "Saved Alerts", value: "8" },
-    { label: "Last Scan", value: "2 min ago" },
-  ];
+  const { user, loading } = useAuth();
+  const { watchlist } = useWatchlist(user);
 
-  const activity = [
-    {
-      title: "A Light in the Attic",
-      price: "£51.77",
-      change: "-4%",
-      status: "drop",
-    },
-    {
-      title: "Gaming Mouse X2",
-      price: "$39.99",
-      change: "+2%",
-      status: "up",
-    },
-    {
-      title: "Mechanical Keyboard",
-      price: "$89.00",
-      change: "No change",
-      status: "same",
-    },
-  ];
+  if (loading) {
+    return <main style={loadingWrap}>Loading...</main>;
+  }
+
+  const trackedCount = watchlist.length;
+  const latest = watchlist.slice(0, 5);
 
   return (
     <main style={page}>
@@ -37,53 +23,60 @@ export default function DashboardPage() {
             <p style={eyebrow}>DASHBOARD</p>
             <h1 style={title}>Overview</h1>
             <p style={subtitle}>
-              Monitor tracked products, recent movements, and alerts.
+              Live data from your saved tracked products.
             </p>
           </div>
 
-          <a href="/" style={linkBtn}>
+          <a href="/" style={button}>
             Back Home
           </a>
         </header>
 
-        <section style={grid}>
-          {stats.map((item) => (
-            <div key={item.label} style={card}>
-              <p style={cardLabel}>{item.label}</p>
-              <h2 style={cardValue}>{item.value}</h2>
-            </div>
-          ))}
+        <section style={statsGrid}>
+          <div style={card}>
+            <p style={label}>Tracked Items</p>
+            <h2 style={value}>{trackedCount}</h2>
+          </div>
+
+          <div style={card}>
+            <p style={label}>Logged In</p>
+            <h2 style={smallValue}>
+              {user?.email ? "Yes" : "No"}
+            </h2>
+          </div>
+
+          <div style={card}>
+            <p style={label}>Recent Items</p>
+            <h2 style={value}>{latest.length}</h2>
+          </div>
         </section>
 
         <section style={section}>
           <div style={sectionHead}>
-            <h2 style={sectionTitle}>Recent Activity</h2>
-            <span style={pill}>{activity.length} events</span>
+            <h2 style={sectionTitle}>Tracked Products</h2>
+            <span style={pill}>{trackedCount} total</span>
           </div>
 
-          <div style={list}>
-            {activity.map((item) => (
-              <div key={item.title} style={row}>
-                <div>
-                  <h3 style={rowTitle}>{item.title}</h3>
-                  <p style={rowSub}>{item.price}</p>
+          {trackedCount === 0 ? (
+            <div style={empty}>
+              No tracked products yet.
+            </div>
+          ) : (
+            <div style={list}>
+              {latest.map((item, index) => (
+                <div key={item.id || index} style={row}>
+                  <div>
+                    <h3 style={rowTitle}>{item.title}</h3>
+                    <p style={rowSub}>{item.url}</p>
+                  </div>
+
+                  <strong style={price}>
+                    {item.price}
+                  </strong>
                 </div>
-
-                <span
-                  style={{
-                    ...badge,
-                    ...(item.status === "drop"
-                      ? drop
-                      : item.status === "up"
-                      ? up
-                      : neutral),
-                  }}
-                >
-                  {item.change}
-                </span>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </section>
       </div>
     </main>
@@ -101,13 +94,21 @@ const container = {
   margin: "0 auto",
 };
 
+const loadingWrap = {
+  minHeight: "100vh",
+  display: "grid",
+  placeItems: "center",
+  background: theme.colors.bg,
+  color: theme.colors.text,
+};
+
 const header = {
   display: "flex",
   justifyContent: "space-between",
-  gap: "24px",
   alignItems: "flex-start",
-  marginBottom: "28px",
+  gap: "20px",
   flexWrap: "wrap",
+  marginBottom: "28px",
 };
 
 const eyebrow = {
@@ -121,7 +122,7 @@ const eyebrow = {
 const title = {
   ...theme.text.hero,
   fontSize: "48px",
-  margin: "10px 0 12px",
+  margin: "8px 0 12px",
   color: theme.colors.text,
 };
 
@@ -131,16 +132,16 @@ const subtitle = {
   margin: 0,
 };
 
-const linkBtn = {
+const button = {
   padding: "12px 16px",
   borderRadius: theme.radius.md,
-  textDecoration: "none",
-  color: "#fff",
   background: theme.colors.primary,
+  color: "#fff",
+  textDecoration: "none",
   fontWeight: "700",
 };
 
-const grid = {
+const statsGrid = {
   display: "grid",
   gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
   gap: "16px",
@@ -151,19 +152,24 @@ const card = {
   border: `1px solid ${theme.colors.border}`,
   borderRadius: theme.radius.lg,
   padding: "20px",
-  boxShadow: theme.shadow.card,
 };
 
-const cardLabel = {
+const label = {
   margin: 0,
   color: theme.colors.muted,
   fontSize: "14px",
 };
 
-const cardValue = {
+const value = {
   margin: "10px 0 0",
-  color: theme.colors.text,
   fontSize: "34px",
+  color: theme.colors.text,
+};
+
+const smallValue = {
+  margin: "10px 0 0",
+  fontSize: "26px",
+  color: theme.colors.text,
 };
 
 const section = {
@@ -186,6 +192,14 @@ const pill = {
   padding: "8px 12px",
   borderRadius: theme.radius.pill,
   border: `1px solid ${theme.colors.border}`,
+  color: theme.colors.muted,
+};
+
+const empty = {
+  background: theme.colors.surface,
+  border: `1px solid ${theme.colors.border}`,
+  borderRadius: theme.radius.lg,
+  padding: "24px",
   color: theme.colors.muted,
 };
 
@@ -214,27 +228,10 @@ const rowTitle = {
 const rowSub = {
   margin: "6px 0 0",
   color: theme.colors.muted,
-  fontSize: "14px",
+  fontSize: "13px",
 };
 
-const badge = {
-  padding: "8px 12px",
-  borderRadius: theme.radius.pill,
-  fontWeight: "700",
-  fontSize: "14px",
-};
-
-const drop = {
-  background: "rgba(16,185,129,0.15)",
-  color: "#34d399",
-};
-
-const up = {
-  background: "rgba(239,68,68,0.15)",
-  color: "#f87171",
-};
-
-const neutral = {
-  background: "rgba(255,255,255,0.08)",
-  color: "#cbd5e1",
+const price = {
+  color: theme.colors.primary,
+  fontSize: "22px",
 };
