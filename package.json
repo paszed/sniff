@@ -27,6 +27,8 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@supabase/ssr": "^0.10.2",
+    "@supabase/supabase-js": "^2.103.0",
     "playwright": "^1.42.0"
   }
 }
